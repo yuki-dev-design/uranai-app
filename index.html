@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陰陽五行・四柱推命 12節入り判定アプリ</title>
+    <title>陰陽五行・四柱推命 命式判定アプリ v1.0</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -20,248 +20,82 @@
             --radius-md: 8px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px 12px; line-height: 1.6; }
+        .container { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 20px; }
+        header { text-align: center; padding: 16px 0; border-bottom: 1px solid var(--card-border); }
+        header h1 { font-size: 1.6rem; color: var(--accent-gold); letter-spacing: 0.05em; margin-bottom: 6px; }
+        header p { font-size: 0.875rem; color: var(--text-secondary); }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,.3); }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--accent-gold); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: .85rem; color: var(--text-secondary); }
+        input[type="date"], input[type="time"], select { width: 100%; padding: 10px 12px; background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; outline: none; }
+        input:focus, select:focus { border-color: var(--accent-gold); }
+        .btn-calc { grid-column: 1 / -1; margin-top: 8px; padding: 12px; background: linear-gradient(135deg,#b45309,#d97706); color:#fff; font-weight:600; font-size:1rem; border:none; border-radius:var(--radius-md); cursor:pointer; }
+        .btn-calc:hover { opacity:.9; }
+        .result-main { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+        .stat-box { background-color:rgba(15,23,42,.6); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:14px; text-align:center; }
+        .stat-label { font-size:.8rem; color:var(--text-secondary); margin-bottom:4px; }
+        .stat-value { font-size:1.4rem; font-weight:700; color:var(--text-primary); }
+        .stat-sub { font-size:.8rem; color:var(--accent-gold); margin-top:4px; }
+        .section-box { background-color:rgba(15,23,42,.4); border-left:4px solid var(--accent-gold); border-radius:0 var(--radius-md) var(--radius-md) 0; padding:14px 16px; margin-bottom:12px; }
+        .section-box.next { border-left-color:var(--accent-blue); }
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px; }
+        .section-name { font-weight:700; font-size:1.1rem; }
+        .section-angle { font-size:.85rem; background-color:rgba(255,255,255,.1); padding:2px 8px; border-radius:12px; color:var(--text-secondary); white-space:nowrap; }
+        .time-detail { font-size:.95rem; color:var(--text-primary); font-family:monospace; }
+        .time-diff { font-size:.8rem; color:var(--text-secondary); margin-top:2px; }
+        .notice { font-size:.8rem; color:var(--text-secondary); line-height:1.6; background-color:rgba(217,119,6,.1); border:1px solid rgba(217,119,6,.3); border-radius:var(--radius-md); padding:10px 12px; margin-top:16px; }
+        .presets { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+        .btn-preset { background-color:rgba(255,255,255,.05); border:1px solid var(--card-border); color:var(--text-secondary); padding:6px 10px; font-size:.8rem; border-radius:20px; cursor:pointer; }
+        .btn-preset:hover { border-color:var(--accent-gold); color:var(--accent-gold); }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 20px 12px;
-            line-height: 1.6;
-        }
+        /* 命式：左から 時・日・月・年。つまり右から 年・月・日・時 */
+        .pillars { display:grid; gap:10px; margin:8px auto 4px; max-width:620px; }
+        .pillars.three { grid-template-columns:repeat(3,1fr); }
+        .pillars.four { grid-template-columns:repeat(4,1fr); }
+        .pillar { border:1px solid var(--card-border); background:rgba(15,23,42,.55); border-radius:12px; overflow:hidden; text-align:center; min-width:0; }
+        .pillar-label { padding:7px 4px; font-size:.78rem; color:var(--text-secondary); border-bottom:1px solid var(--card-border); }
+        .pillar-kanji { font-size:2rem; font-weight:800; line-height:1.25; padding:8px 3px 2px; }
+        .pillar-branch { font-size:2rem; font-weight:800; line-height:1.25; padding:2px 3px 8px; }
+        .pillar.day { border-color:var(--accent-gold); box-shadow:0 0 0 1px rgba(217,119,6,.3) inset; }
+        .pillar.day .pillar-kanji { color:var(--accent-gold-light); }
+        .pillar-caption { font-size:.72rem; color:var(--text-secondary); padding:0 4px 8px; }
+        .settings-summary { text-align:center; font-size:.82rem; color:var(--text-secondary); margin-top:10px; }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        .five-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+        .five-item { background:rgba(15,23,42,.55); border:1px solid var(--card-border); border-radius:10px; padding:10px 4px; text-align:center; }
+        .five-name { font-size:1.15rem; font-weight:700; }
+        .five-count { color:var(--text-secondary); font-size:.78rem; }
+        .five-percent { color:var(--accent-gold); font-weight:700; }
+        .balance-summary { margin-top:12px; font-size:.9rem; text-align:center; }
 
-        header {
-            text-align: center;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--card-border);
-        }
+        .phase-list { display:flex; flex-direction:column; gap:8px; }
+        .phase-item { border:1px solid var(--card-border); background:rgba(15,23,42,.45); border-radius:10px; padding:10px 12px; }
+        .phase-type { color:var(--accent-gold); font-weight:700; }
+        .muted { color:var(--text-secondary); font-size:.82rem; }
+        .hidden { display:none !important; }
 
-        header h1 {
-            font-size: 1.6rem;
-            color: var(--accent-gold);
-            letter-spacing: 0.05em;
-            margin-bottom: 6px;
-        }
-
-        header p {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--accent-gold);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        input[type="date"],
-        input[type="time"],
-        select {
-            width: 100%;
-            padding: 10px 12px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--accent-gold);
-        }
-
-        .btn-calc {
-            grid-column: 1 / -1;
-            margin-top: 8px;
-            padding: 12px;
-            background: linear-gradient(135deg, #b45309, #d97706);
-            color: #fff;
-            font-weight: 600;
-            font-size: 1rem;
-            border: none;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .btn-calc:hover {
-            opacity: 0.9;
-        }
-
-        .result-main {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        @media (max-width: 600px) {
-            .result-main {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .stat-box {
-            background-color: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 14px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .stat-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stat-sub {
-            font-size: 0.8rem;
-            color: var(--accent-gold);
-            margin-top: 4px;
-        }
-
-        .section-box {
-            background-color: rgba(15, 23, 42, 0.4);
-            border-left: 4px solid var(--accent-gold);
-            border-radius: 0 var(--radius-md) var(--radius-md) 0;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-        }
-
-        .section-box.next {
-            border-left-color: var(--accent-blue);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .section-name {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .section-angle {
-            font-size: 0.85rem;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 2px 8px;
-            border-radius: 12px;
-            color: var(--text-secondary);
-        }
-
-        .time-detail {
-            font-size: 0.95rem;
-            color: var(--text-primary);
-            font-family: monospace;
-        }
-
-        .time-diff {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-
-        .presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .btn-preset {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            color: var(--text-secondary);
-            padding: 6px 10px;
-            font-size: 0.8rem;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-preset:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .notice {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            background-color: rgba(217, 119, 6, 0.1);
-            border: 1px solid rgba(217, 119, 6, 0.3);
-            border-radius: var(--radius-md);
-            padding: 10px 12px;
-            margin-top: 16px;
+        @media (max-width:600px) {
+            .result-main { grid-template-columns:1fr; }
+            .card { padding:16px 12px; }
+            .five-grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
+            .five-item { padding:8px 2px; }
+            .pillar-kanji, .pillar-branch { font-size:1.7rem; }
+            .pillar-label { font-size:.72rem; }
+            .section-header { align-items:flex-start; flex-direction:column; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <header>
-        <h1>陰陽五行・四柱推命 節入り判定</h1>
-        <p>月柱判定用 12節気（太陽黄経）高精度自前算出演算エンジン</p>
+        <h1>陰陽五行・四柱推命 命式判定</h1>
+        <p>12節入り・三柱/四柱・五行構成比・位相法 v1.0</p>
     </header>
 
-    <!-- 入力フォーム -->
     <div class="card">
         <div class="card-title">生年月日・時刻設定</div>
         <form id="calcForm" onsubmit="handleCalculate(event)">
@@ -275,392 +109,391 @@
                     <input type="time" id="birthTime" step="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="timeZone">標準時 (タイムゾーン)</label>
+                    <label for="timeZone">標準時（タイムゾーン）</label>
                     <select id="timeZone">
-                        <option value="9" selected>JST (日本標準時 +09:00)</option>
-                        <option value="8">CST (中国標準時 +08:00)</option>
-                        <option value="0">UTC (協定世界時 +00:00)</option>
+                        <option value="9" selected>JST（日本標準時 +09:00）</option>
+                        <option value="8">CST（中国標準時 +08:00）</option>
+                        <option value="0">UTC（協定世界時 +00:00）</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-calc">節入り日時を判定・計算する</button>
+                <div class="form-group">
+                    <label for="dayBoundary">日柱の切替</label>
+                    <select id="dayBoundary">
+                        <option value="0" selected>0:00切替</option>
+                        <option value="23">23:00（子初）切替</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pillarMode">命式方式</label>
+                    <select id="pillarMode">
+                        <option value="three" selected>三柱式（年・月・日）</option>
+                        <option value="four">四柱式（年・月・日・時）</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-calc">節入り・命式・五行・位相法を判定する</button>
             </div>
         </form>
-
-        <div style="margin-top: 16px;">
-            <div class="stat-label">動作確認用テストプリセット（境界日時など）</div>
+        <div style="margin-top:16px;">
+            <div class="stat-label">動作確認用プリセット</div>
             <div class="presets">
-                <button class="btn-preset" onclick="setPreset('2024-02-04', '17:27:00')">2024立春 直前 (17:27)</button>
-                <button class="btn-preset" onclick="setPreset('2024-02-04', '17:28:00')">2024立春 節入り (17:28)</button>
-                <button class="btn-preset" onclick="setPreset('2024-09-07', '12:10:00')">2024白露 直前 (12:10)</button>
-                <button class="btn-preset" onclick="setPreset('2024-09-07', '12:11:00')">2024白露 節入り (12:11)</button>
-                <button class="btn-preset" onclick="setPreset('2025-01-05', '11:32:00')">2025小寒 節入り (11:32)</button>
+                <button type="button" class="btn-preset" onclick="setPreset('2026-01-01','12:00:00')">基準日 2026/1/1</button>
+                <button type="button" class="btn-preset" onclick="setPreset('2026-01-01','22:59:00')">22:59</button>
+                <button type="button" class="btn-preset" onclick="setPreset('2026-01-01','23:00:00')">23:00</button>
+                <button type="button" class="btn-preset" onclick="setPreset('2024-02-04','17:27:00')">2024立春付近</button>
+                <button type="button" class="btn-preset" onclick="setPreset('2024-09-07','12:10:00')">2024白露付近</button>
             </div>
         </div>
     </div>
 
-    <!-- 結果表示エリア -->
     <div class="card" id="resultCard">
-        <div class="card-title">計算結果</div>
-        
+        <div class="card-title">節入り判定</div>
         <div class="result-main">
             <div class="stat-box">
-                <div class="stat-label">対象日時 (指定タイムゾーン)</div>
-                <div class="stat-value" id="displayTargetTime" style="font-size:1.1rem; font-family:monospace;">-</div>
+                <div class="stat-label">対象日時（指定タイムゾーン）</div>
+                <div class="stat-value" id="displayTargetTime" style="font-size:1.1rem;font-family:monospace;">-</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">太陽黄経 (Apparent Solar Longitude)</div>
+                <div class="stat-label">太陽視黄経（近似計算）</div>
                 <div class="stat-value" id="displayLongitude" style="color:var(--accent-gold);">-</div>
                 <div class="stat-sub" id="displayCurrentTerm">-</div>
             </div>
         </div>
-
-        <!-- 直前の節入り -->
         <div class="section-box">
-            <div class="section-header">
-                <span class="section-name" id="prevTermName">直前の節入り: -</span>
-                <span class="section-angle" id="prevTermAngle">目標黄経: -°</span>
-            </div>
-            <div class="time-detail" id="prevTermTime">-</div>
-            <div class="time-diff" id="prevTermDiff">-</div>
+            <div class="section-header"><span class="section-name" id="prevTermName">直前の節入り: -</span><span class="section-angle" id="prevTermAngle">目標黄経: -°</span></div>
+            <div class="time-detail" id="prevTermTime">-</div><div class="time-diff" id="prevTermDiff">-</div>
         </div>
-
-        <!-- 次の節入り -->
         <div class="section-box next">
-            <div class="section-header">
-                <span class="section-name" id="nextTermName">次の節入り: -</span>
-                <span class="section-angle" id="nextTermAngle">目標黄経: -°</span>
-            </div>
-            <div class="time-detail" id="nextTermTime">-</div>
-            <div class="time-diff" id="nextTermDiff">-</div>
+            <div class="section-header"><span class="section-name" id="nextTermName">次の節入り: -</span><span class="section-angle" id="nextTermAngle">目標黄経: -°</span></div>
+            <div class="time-detail" id="nextTermTime">-</div><div class="time-diff" id="nextTermDiff">-</div>
         </div>
+    </div>
 
-        <div class="notice">
-            ※四柱推命の月柱更新は、暦の「ついたち（1日）」ではなく「節入り日時」で切り替わります。<br>
-            当判定結果は、外部APIを使用せず純粋な天文学的簡易軌道近似と二分探索アルゴリズムによって自前計算しています。
-        </div>
+    <div class="card">
+        <div class="card-title">三柱 / 四柱 命式</div>
+        <div id="pillars" class="pillars three"></div>
+        <div id="settingsSummary" class="settings-summary">-</div>
+        <div class="notice">※命式は<strong>右から 年柱 → 月柱 → 日柱 → 時柱</strong>の順です。三柱式では時柱を表示・集計しません。日干（日主）は枠を強調しています。</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">五行バランス</div>
+        <div id="fiveElements" class="five-grid"></div>
+        <div id="balanceSummary" class="balance-summary">-</div>
+        <div class="notice">※これは<strong>表面干支の五行構成比</strong>です。三柱式は6文字、四柱式は8文字を単純集計します。蔵干・月令・旺衰・季節補正は含めないため、命理上の厳密な「強さ」とは別です。</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">位相法</div>
+        <div id="phaseResults" class="phase-list"></div>
+        <div class="notice">※v1.0は一般的なルールをもとにした初期実装です。半会・刑などは流派差があるため、康仁塾の命式との答え合わせ後に調整できるようルールをデータ定義として分離しています。</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">v1.0 計算上の注意</div>
+        <div class="muted">年柱は立春で切替、月柱は12節入りで切替。日柱は「2026年1月1日＝乙亥日」を基準に60干支を循環させます。日柱切替は0:00 / 23:00を選択できます。太陽黄経は外部APIを使わない簡易天文近似式による算出です。</div>
     </div>
 </div>
 
 <script>
-
-/**
- * 四柱推命の月柱判定に使用する12個の「節（節気）」定義
- */
 const SOLAR_TERMS = [
-    { name: "立春", angle: 315 },
-    { name: "啓蟄", angle: 345 },
-    { name: "清明", angle: 15 },
-    { name: "立夏", angle: 45 },
-    { name: "芒種", angle: 75 },
-    { name: "小暑", angle: 105 },
-    { name: "立秋", angle: 135 },
-    { name: "白露", angle: 165 },
-    { name: "寒露", angle: 195 },
-    { name: "立冬", angle: 225 },
-    { name: "大雪", angle: 255 },
-    { name: "小寒", angle: 285 }
+    { name:"立春", angle:315, month:2, day:4, monthBranch:"寅", monthIndex:0 },
+    { name:"啓蟄", angle:345, month:3, day:6, monthBranch:"卯", monthIndex:1 },
+    { name:"清明", angle:15,  month:4, day:5, monthBranch:"辰", monthIndex:2 },
+    { name:"立夏", angle:45,  month:5, day:5, monthBranch:"巳", monthIndex:3 },
+    { name:"芒種", angle:75,  month:6, day:6, monthBranch:"午", monthIndex:4 },
+    { name:"小暑", angle:105, month:7, day:7, monthBranch:"未", monthIndex:5 },
+    { name:"立秋", angle:135, month:8, day:7, monthBranch:"申", monthIndex:6 },
+    { name:"白露", angle:165, month:9, day:7, monthBranch:"酉", monthIndex:7 },
+    { name:"寒露", angle:195, month:10,day:8, monthBranch:"戌", monthIndex:8 },
+    { name:"立冬", angle:225, month:11,day:7, monthBranch:"亥", monthIndex:9 },
+    { name:"大雪", angle:255, month:12,day:7, monthBranch:"子", monthIndex:10 },
+    { name:"小寒", angle:285, month:1, day:5, monthBranch:"丑", monthIndex:11 }
 ];
 
-/**
- * 角度を 0 <= deg < 360 の範囲に正規化
- */
-function normalizeAngle(deg) {
-    let a = deg % 360;
-    if (a < 0) a += 360;
-    return a;
+const HEAVENLY_STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const EARTHLY_BRANCHES = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+const SEXAGENARY = Array.from({length:60},(_,i)=>({stem:HEAVENLY_STEMS[i%10],branch:EARTHLY_BRANCHES[i%12],text:HEAVENLY_STEMS[i%10]+EARTHLY_BRANCHES[i%12]}));
+
+const STEM_ELEMENT = {甲:"木",乙:"木",丙:"火",丁:"火",戊:"土",己:"土",庚:"金",辛:"金",壬:"水",癸:"水"};
+const BRANCH_ELEMENT = {寅:"木",卯:"木",巳:"火",午:"火",辰:"土",戌:"土",丑:"土",未:"土",申:"金",酉:"金",亥:"水",子:"水"};
+const ELEMENTS = ["木","火","土","金","水"];
+
+/* 位相法ルール。康仁塾との照合後にここを変更すれば判定ロジック本体を触らず調整できる。 */
+const PHASE_RULES = {
+    pairs: {
+        "支合（六合）": [["子","丑"],["寅","亥"],["卯","戌"],["辰","酉"],["巳","申"],["午","未"]],
+        "冲": [["子","午"],["丑","未"],["寅","申"],["卯","酉"],["辰","戌"],["巳","亥"]],
+        "害": [["子","未"],["丑","午"],["寅","巳"],["卯","辰"],["申","亥"],["酉","戌"]],
+        "破": [["子","酉"],["丑","辰"],["寅","亥"],["卯","午"],["巳","申"],["未","戌"]],
+        /* 半会は一般的な「三合局の中心支を含む2支」を採用。流派差は要確認。 */
+        "半会": [["申","子"],["子","辰"],["亥","卯"],["卯","未"],["寅","午"],["午","戌"],["巳","酉"],["酉","丑"]],
+        "刑": [["子","卯"]]
+    },
+    triples: {
+        "三合（水局）": ["申","子","辰"],
+        "三合（木局）": ["亥","卯","未"],
+        "三合（火局）": ["寅","午","戌"],
+        "三合（金局）": ["巳","酉","丑"],
+        "方合 / 方三位（木）": ["寅","卯","辰"],
+        "方合 / 方三位（火）": ["巳","午","未"],
+        "方合 / 方三位（金）": ["申","酉","戌"],
+        "方合 / 方三位（水）": ["亥","子","丑"],
+        /* 三刑は3支そろった場合をここで判定。2支だけでも刑とする流派は要確認。 */
+        "三刑（寅巳申）": ["寅","巳","申"],
+        "三刑（丑戌未）": ["丑","戌","未"]
+    },
+    selfPunishment: ["辰","午","酉","亥"]
+};
+
+function normalizeAngle(deg){ let a=deg%360; if(a<0)a+=360; return a; }
+function signedAngleDifference(current,target){ return ((current-target+540)%360)-180; }
+
+function getJulianDay(year,month,day,hour,minute,second){
+    let y=year,m=month;
+    if(m<=2){y-=1;m+=12;}
+    const a=Math.floor(y/100), b=2-a+Math.floor(a/4);
+    const dayFraction=(hour+minute/60+second/3600)/24;
+    return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+day+dayFraction+b-1524.5;
 }
 
-/**
- * ユリウス日 (Julian Day) の計算 (UTC指定)
- */
-function getJulianDay(year, month, day, hour, minute, second) {
-    let y = year;
-    let m = month;
-    if (m <= 2) {
-        y -= 1;
-        m += 12;
+function calculateSolarLongitude(jd){
+    const T=(jd-2451545.0)/36525.0;
+    const L0=280.46646+36000.76983*T+0.0003032*T*T;
+    const M=357.52911+35999.05029*T-0.0001537*T*T;
+    const Mr=M*Math.PI/180;
+    const C=(1.914602-0.004817*T-0.000014*T*T)*Math.sin(Mr)+(0.019993-0.000101*T)*Math.sin(2*Mr)+0.000289*Math.sin(3*Mr);
+    const omega=(125.04-1934.136*T)*Math.PI/180;
+    return normalizeAngle(L0+C-0.00569-0.00478*Math.sin(omega));
+}
+
+function julianDayToDate(jd){ return new Date((jd-2440587.5)*86400000); }
+function dateToJulianDay(date){ return date.getTime()/86400000+2440587.5; }
+
+/* 入力値をブラウザのローカルTZに依存しない「壁時計」成分として扱う。 */
+function parseWallClock(dateStr,timeStr){
+    const [y,m,d]=dateStr.split("-").map(Number);
+    const parts=timeStr.split(":").map(Number);
+    return {year:y,month:m,day:d,hour:parts[0]||0,minute:parts[1]||0,second:parts[2]||0};
+}
+function wallClockToUtcDate(parts,tzOffset){
+    return new Date(Date.UTC(parts.year,parts.month-1,parts.day,parts.hour-tzOffset,parts.minute,parts.second));
+}
+function utcDateToWallClockDate(utcDate,tzOffset){ return new Date(utcDate.getTime()+tzOffset*3600000); }
+function wallClockDateFromParts(parts){ return new Date(Date.UTC(parts.year,parts.month-1,parts.day,parts.hour,parts.minute,parts.second)); }
+
+/* 各節の概算日±6日の中から目標黄経の交点を二分探索。 */
+function findTermDateForYear(year,term,tzOffset){
+    const roughWall={year,month:term.month,day:term.day,hour:12,minute:0,second:0};
+    const roughUtc=wallClockToUtcDate(roughWall,tzOffset);
+    let low=dateToJulianDay(new Date(roughUtc.getTime()-6*86400000));
+    let high=dateToJulianDay(new Date(roughUtc.getTime()+6*86400000));
+    let fLow=signedAngleDifference(calculateSolarLongitude(low),term.angle);
+    let fHigh=signedAngleDifference(calculateSolarLongitude(high),term.angle);
+    if(!(fLow<=0&&fHigh>=0)){
+        throw new Error(`${year}年 ${term.name} の探索区間で黄経を挟めませんでした`);
     }
-    const a = Math.floor(y / 100);
-    const b = 2 - a + Math.floor(a / 4);
-    const dayFraction = (hour + minute / 60 + second / 3600) / 24;
-    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + dayFraction + b - 1524.5;
-}
-
-/**
- * 指定ユリウス日における太陽視黄経（Apparent Solar Longitude）を計算する自前関数
- * 天文学的近似式（J2000.0基準・中心差・歳差補正含む）
- */
-function calculateSolarLongitude(jd) {
-    // J2000.0 (2000年1月1日12:00 UTC = JD 2451545.0) からのユリウス世紀数 T
-    const T = (jd - 2451545.0) / 36525.0;
-
-    // 太陽の平均黄経 L0 (deg)
-    let L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
-    
-    // 太陽の平均近点角 M (deg)
-    let M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
-    const M_rad = M * Math.PI / 180;
-
-    // 地球軌道の心率 (中心差 C) (deg)
-    const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M_rad)
-            + (0.019993 - 0.000101 * T) * Math.sin(2 * M_rad)
-            + 0.000289 * Math.sin(3 * M_rad);
-
-    // 太陽の真黄経
-    const sunTrueLong = L0 + C;
-
-    // 月の昇交点黄経 Ω (歳差・章動補正用)
-    const omega = 125.04 - 1934.136 * T;
-    const omega_rad = omega * Math.PI / 180;
-
-    // 視黄経 (Apparent Longitude) : 光行差・章動簡易補正
-    const apparentLongitude = sunTrueLong - 0.00569 - 0.00478 * Math.sin(omega_rad);
-
-    return normalizeAngle(apparentLongitude);
-}
-
-
-/**
- * 角度差分計算 (targetAngle - currentAngle) を -180 〜 +180 度で返す
- */
-function getAngleDifference(current, target) {
-    let diff = target - current;
-    while (diff < -180) diff += 360;
-    while (diff > 180) diff -= 360;
-    return diff;
-}
-
-/**
- * 指定した目標太陽黄経になる正確な日時（JD）を二分法（Bisection Search）で探索
- * @param {number} baseJD - 探索起点となるユリウス日
- * @param {number} targetAngle - 目標角度 (例: 315)
- * @param {boolean} findNext - trueなら未来方向、falseなら過去方向
- */
-function findSetsuriDate(baseJD, targetAngle, findNext) {
-    // 太陽の移動速度は約 0.9856度/日
-    // 直前・直後の節気（約30度離れている）を探すため、±35日の範囲を探索枠とする
-    let low, high;
-
-    if (findNext) {
-        low = baseJD;
-        high = baseJD + 35;
-    } else {
-        low = baseJD - 35;
-        high = baseJD;
+    for(let i=0;i<45;i++){
+        const mid=(low+high)/2;
+        const fMid=signedAngleDifference(calculateSolarLongitude(mid),term.angle);
+        if(fMid<0) low=mid; else high=mid;
     }
+    const utcDate=julianDayToDate((low+high)/2);
+    return {term,utcDate,wallDate:utcDateToWallClockDate(utcDate,tzOffset)};
+}
 
-    // 二分探索 (精度の限界であるミリ秒レベルまで28回ループで絞り込み)
-    for (let i = 0; i < 30; i++) {
-        const mid = (low + high) / 2;
-        const currentAngle = calculateSolarLongitude(mid);
-        const diff = getAngleDifference(currentAngle, targetAngle);
+function getTermEvents(year,tzOffset){
+    const events=[];
+    for(let y=year-1;y<=year+1;y++){
+        for(const term of SOLAR_TERMS) events.push(findTermDateForYear(y,term,tzOffset));
+    }
+    events.sort((a,b)=>a.utcDate-b.utcDate);
+    return events;
+}
 
-        if (findNext) {
-            if (diff > 0) {
-                low = mid;
-            } else {
-                high = mid;
-            }
-        } else {
-            if (diff < 0) {
-                high = mid;
-            } else {
-                low = mid;
-            }
+function analyzeSetsuri(parts,tzOffset){
+    const targetUtc=wallClockToUtcDate(parts,tzOffset);
+    const jd=dateToJulianDay(targetUtc);
+    const events=getTermEvents(parts.year,tzOffset);
+    let prev=null,next=null;
+    for(const e of events){
+        if(e.utcDate.getTime()<=targetUtc.getTime()) prev=e;
+        if(e.utcDate.getTime()>targetUtc.getTime()){ next=e; break; }
+    }
+    return {targetUtc,currentLongitude:calculateSolarLongitude(jd),prevTerm:prev.term,prevDateLocal:prev.wallDate,nextTerm:next.term,nextDateLocal:next.wallDate,prevEvent:prev,nextEvent:next};
+}
+
+function mod(n,m){ return ((n%m)+m)%m; }
+function sexagenaryAt(index){ return SEXAGENARY[mod(index,60)]; }
+
+/* 西暦年の干支：1984年=甲子を基準。年柱の実年は立春判定後に決める。 */
+function sexagenaryYear(year){ return sexagenaryAt(year-1984); }
+function calculateYearPillar(parts,tzOffset){
+    const targetUtc=wallClockToUtcDate(parts,tzOffset);
+    const lichun=findTermDateForYear(parts.year,SOLAR_TERMS.find(t=>t.name==="立春"),tzOffset);
+    const pillarYear=targetUtc<lichun.utcDate?parts.year-1:parts.year;
+    const p=sexagenaryYear(pillarYear);
+    return {...p,pillarYear,lichun};
+}
+
+/* 五虎遁：年干から寅月の月干を決める。 */
+function tigerStartStemIndex(yearStem){
+    const i=HEAVENLY_STEMS.indexOf(yearStem);
+    const group=i%5; // 甲/己=0, 乙/庚=1 ...
+    return [2,4,6,8,0][group]; // 丙,戊,庚,壬,甲
+}
+function calculateMonthPillar(parts,tzOffset,yearStem){
+    const targetUtc=wallClockToUtcDate(parts,tzOffset);
+    const events=getTermEvents(parts.year,tzOffset).filter(e=>e.utcDate<=targetUtc);
+    const prev=events[events.length-1];
+    const term=prev.term;
+    const branch=term.monthBranch;
+    const stem=HEAVENLY_STEMS[mod(tigerStartStemIndex(yearStem)+term.monthIndex,10)];
+    return {stem,branch,text:stem+branch,term,event:prev};
+}
+
+/* 日柱：2026-01-01 = 乙亥（SEXAGENARY index 11）を基準。UTCの暦日番号で差を取る。 */
+const DAY_BASE_UTC=Date.UTC(2026,0,1);
+const DAY_BASE_INDEX=SEXAGENARY.findIndex(p=>p.text==="乙亥");
+function effectiveCivilDate(parts,boundaryHour){
+    const d=Date.UTC(parts.year,parts.month-1,parts.day);
+    return boundaryHour===23&&parts.hour>=23 ? d+86400000 : d;
+}
+function calculateDayPillar(parts,boundaryHour){
+    const effective=effectiveCivilDate(parts,boundaryHour);
+    const diffDays=Math.round((effective-DAY_BASE_UTC)/86400000);
+    const p=sexagenaryAt(DAY_BASE_INDEX+diffDays);
+    return {...p,effectiveDate:new Date(effective),diffDays};
+}
+
+function hourBranchIndex(hour){ return hour===23?0:Math.floor((hour+1)/2); }
+function ratStartStemIndex(dayStem){
+    const i=HEAVENLY_STEMS.indexOf(dayStem);
+    const group=i%5;
+    return [0,2,4,6,8][group]; // 甲,丙,戊,庚,壬
+}
+function calculateHourPillar(parts,dayStem){
+    const branchIndex=hourBranchIndex(parts.hour);
+    const branch=EARTHLY_BRANCHES[branchIndex];
+    const stem=HEAVENLY_STEMS[mod(ratStartStemIndex(dayStem)+branchIndex,10)];
+    return {stem,branch,text:stem+branch};
+}
+
+function calculateFiveElements(pillars){
+    const counts={木:0,火:0,土:0,金:0,水:0};
+    for(const p of pillars){ counts[STEM_ELEMENT[p.stem]]++; counts[BRANCH_ELEMENT[p.branch]]++; }
+    const total=pillars.length*2;
+    return {counts,total,percent:Object.fromEntries(ELEMENTS.map(e=>[e,counts[e]/total*100]))};
+}
+
+function pairMatches(a,b,pair){ return (a===pair[0]&&b===pair[1])||(a===pair[1]&&b===pair[0]); }
+function combinations(items,size){
+    const out=[];
+    function walk(start,picked){ if(picked.length===size){out.push(picked.slice());return;} for(let i=start;i<items.length;i++){picked.push(items[i]);walk(i+1,picked);picked.pop();} }
+    walk(0,[]); return out;
+}
+function calculatePhases(pillars){
+    const results=[];
+    const pairCombos=combinations(pillars,2);
+    for(const [a,b] of pairCombos){
+        for(const [type,rules] of Object.entries(PHASE_RULES.pairs)){
+            for(const rule of rules){ if(pairMatches(a.branch,b.branch,rule)) results.push({type,pillars:[a,b],branches:[a.branch,b.branch]}); }
+        }
+        if(a.branch===b.branch&&PHASE_RULES.selfPunishment.includes(a.branch)) results.push({type:"自刑",pillars:[a,b],branches:[a.branch,b.branch]});
+    }
+    const tripleCombos=combinations(pillars,3);
+    for(const combo of tripleCombos){
+        const present=combo.map(p=>p.branch);
+        for(const [type,rule] of Object.entries(PHASE_RULES.triples)){
+            if(rule.every(r=>present.includes(r))) results.push({type,pillars:combo,branches:present});
         }
     }
-
-    return (low + high) / 2;
+    return results;
 }
 
-/**
- * ユリウス日(JD)をDateオブジェクト(UTC)に変換
- */
-function julianDayToDate(jd) {
-    const z = Math.floor(jd + 0.5);
-    const f = (jd + 0.5) - z;
-    let a = z;
-    if (z >= 2299161) {
-        const alpha = Math.floor((z - 1867216.25) / 36524.25);
-        a = z + 1 + alpha - Math.floor(alpha / 4);
+function formatWallDate(d){
+    const y=d.getUTCFullYear(),m=String(d.getUTCMonth()+1).padStart(2,"0"),day=String(d.getUTCDate()).padStart(2,"0");
+    const h=String(d.getUTCHours()).padStart(2,"0"),mi=String(d.getUTCMinutes()).padStart(2,"0"),s=String(d.getUTCSeconds()).padStart(2,"0");
+    return `${y}年${m}月${day}日 ${h}:${mi}:${s}`;
+}
+function formatTimeDiff(ms){
+    const abs=Math.abs(ms),days=Math.floor(abs/86400000),hours=Math.floor((abs%86400000)/3600000),mins=Math.floor((abs%3600000)/60000);
+    return `${days?days+"日 ":""}${(hours||days)?hours+"時間 ":""}${mins}分`;
+}
+function localWallMs(parts){ return Date.UTC(parts.year,parts.month-1,parts.day,parts.hour,parts.minute,parts.second); }
+
+function renderPillars(mode,yearP,monthP,dayP,hourP){
+    const container=document.getElementById("pillars");
+    const display = mode==="four"
+        ? [{...hourP,label:"時柱",key:"hour"},{...dayP,label:"日柱",key:"day"},{...monthP,label:"月柱",key:"month"},{...yearP,label:"年柱",key:"year"}]
+        : [{...dayP,label:"日柱",key:"day"},{...monthP,label:"月柱",key:"month"},{...yearP,label:"年柱",key:"year"}];
+    container.className=`pillars ${mode}`;
+    container.innerHTML=display.map(p=>`<div class="pillar ${p.key==='day'?'day':''}"><div class="pillar-label">${p.label}</div><div class="pillar-kanji">${p.stem}</div><div class="pillar-branch">${p.branch}</div><div class="pillar-caption">${p.key==='day'?'日主':''}</div></div>`).join("");
+}
+
+function renderFiveElements(data){
+    document.getElementById("fiveElements").innerHTML=ELEMENTS.map(e=>`<div class="five-item"><div class="five-name">${e}</div><div class="five-count">${data.counts[e]}個</div><div class="five-percent">${data.percent[e].toFixed(1)}%</div></div>`).join("");
+    const max=Math.max(...ELEMENTS.map(e=>data.counts[e])),min=Math.min(...ELEMENTS.map(e=>data.counts[e]));
+    const maxEls=ELEMENTS.filter(e=>data.counts[e]===max).join("・"), minEls=ELEMENTS.filter(e=>data.counts[e]===min).join("・");
+    document.getElementById("balanceSummary").textContent=`最多：${maxEls}（${max}） ／ 最少：${minEls}（${min}） ／ 分母 ${data.total}文字`;
+}
+
+function renderPhases(results){
+    const el=document.getElementById("phaseResults");
+    if(!results.length){ el.innerHTML='<div class="muted">現在の対象柱では、v1.0の判定ルールに該当する位相はありません。</div>'; return; }
+    el.innerHTML=results.map(r=>{
+        const labels=r.pillars.map(p=>`${p.label}「${p.branch}」`).join(" ― ");
+        return `<div class="phase-item"><span class="phase-type">${r.type}</span><br><span>${labels}</span></div>`;
+    }).join("");
+}
+
+function handleCalculate(e){
+    if(e)e.preventDefault();
+    const dateStr=document.getElementById("birthDate").value;
+    const timeStr=document.getElementById("birthTime").value;
+    const tzOffset=parseFloat(document.getElementById("timeZone").value);
+    const boundaryHour=parseInt(document.getElementById("dayBoundary").value,10);
+    const mode=document.getElementById("pillarMode").value;
+    if(!dateStr||!timeStr)return;
+    const parts=parseWallClock(dateStr,timeStr.length===5?timeStr+":00":timeStr);
+    try{
+        const setsuri=analyzeSetsuri(parts,tzOffset);
+        const yearP=calculateYearPillar(parts,tzOffset);
+        const monthP=calculateMonthPillar(parts,tzOffset,yearP.stem);
+        const dayP=calculateDayPillar(parts,boundaryHour);
+        const hourP=calculateHourPillar(parts,dayP.stem);
+
+        document.getElementById("displayTargetTime").textContent=`${dateStr} ${String(parts.hour).padStart(2,"0")}:${String(parts.minute).padStart(2,"0")}:${String(parts.second).padStart(2,"0")}`;
+        document.getElementById("displayLongitude").textContent=`${setsuri.currentLongitude.toFixed(4)}°`;
+        document.getElementById("displayCurrentTerm").textContent=`【${setsuri.prevTerm.name}】節の期間中`;
+        document.getElementById("prevTermName").textContent=`直前の節入り: ${setsuri.prevTerm.name}`;
+        document.getElementById("prevTermAngle").textContent=`目標: ${setsuri.prevTerm.angle}°`;
+        document.getElementById("prevTermTime").textContent=formatWallDate(setsuri.prevDateLocal);
+        document.getElementById("nextTermName").textContent=`次の節入り: ${setsuri.nextTerm.name}`;
+        document.getElementById("nextTermAngle").textContent=`目標: ${setsuri.nextTerm.angle}°`;
+        document.getElementById("nextTermTime").textContent=formatWallDate(setsuri.nextDateLocal);
+        const targetWall=localWallMs(parts);
+        document.getElementById("prevTermDiff").textContent=`（節入りから ${formatTimeDiff(targetWall-setsuri.prevDateLocal.getTime())} 経過）`;
+        document.getElementById("nextTermDiff").textContent=`（節入りまで あと ${formatTimeDiff(setsuri.nextDateLocal.getTime()-targetWall)}）`;
+
+        renderPillars(mode,yearP,monthP,dayP,hourP);
+        const activePillars=mode==="four"
+            ? [{...yearP,label:"年支"},{...monthP,label:"月支"},{...dayP,label:"日支"},{...hourP,label:"時支"}]
+            : [{...yearP,label:"年支"},{...monthP,label:"月支"},{...dayP,label:"日支"}];
+        const five=calculateFiveElements(activePillars);
+        renderFiveElements(five);
+        renderPhases(calculatePhases(activePillars));
+        document.getElementById("settingsSummary").textContent=`${mode==='three'?'三柱式':'四柱式'} ／ 日柱 ${boundaryHour===23?'23:00（子初）':'0:00'}切替 ／ 年柱境界：立春 ／ 月柱境界：12節`;
+    }catch(err){
+        console.error(err);
+        alert("計算中にエラーが発生しました: "+err.message);
     }
-    const b = a + 1524;
-    const c = Math.floor((b - 122.1) / 365.25);
-    const d = Math.floor(365.25 * c);
-    const e = Math.floor((b - d) / 30.6001);
-
-    const day = b - d - Math.floor(30.6001 * e) + f;
-    let month = (e < 14) ? e - 1 : e - 13;
-    let year = (month > 2) ? c - 4716 : c - 4656;
-
-    const dayInt = Math.floor(day);
-    const hoursFraction = (day - dayInt) * 24;
-    const hours = Math.floor(hoursFraction);
-    const minutesFraction = (hoursFraction - hours) * 60;
-    const minutes = Math.floor(minutesFraction);
-    const seconds = Math.round((minutesFraction - minutes) * 60);
-
-    return new Date(Date.UTC(year, month - 1, dayInt, hours, minutes, seconds));
 }
 
+function setPreset(date,time){ document.getElementById("birthDate").value=date; document.getElementById("birthTime").value=time; handleCalculate(); }
 
-/**
- * 12節気の判定メイン関数
- */
-function analyzeSetsuri(targetDate, timeZoneOffsetHours) {
-    // タイムゾーンのオフセットを考慮してUTC日時に変換
-    const utcTimeMs = targetDate.getTime() - (timeZoneOffsetHours * 3600 * 1000);
-    const utcDate = new Date(utcTimeMs);
-
-    // 入力日時のユリウス日
-    const targetJD = getJulianDay(
-        utcDate.getUTCFullYear(),
-        utcDate.getUTCMonth() + 1,
-        utcDate.getUTCDate(),
-        utcDate.getUTCHours(),
-        utcDate.getUTCMinutes(),
-        utcDate.getUTCSeconds()
-    );
-
-    // 1. 現在の太陽黄経を計算
-    const currentLongitude = calculateSolarLongitude(targetJD);
-
-    // 2. 直前の節入り・直後の節入りのインデックスと目標角度を判定
-    // 12個の節気角度: [315, 345, 15, 45, 75, 105, 135, 165, 195, 225, 255, 285]
-    // 立春(315)から開始するようにソート順を考慮して評価
-    
-    let prevTerm = null;
-    let nextTerm = null;
-
-    // 各節気角度との差分から最も近い過去の節気を見つける
-    let minPrevDiff = 360;
-    let minNextDiff = 360;
-
-    SOLAR_TERMS.forEach(term => {
-        // currentLongitude から targetAngle までの進行角度
-        let forwardDiff = normalizeAngle(term.angle - currentLongitude);
-        let backwardDiff = normalizeAngle(currentLongitude - term.angle);
-
-        if (backwardDiff < minPrevDiff) {
-            minPrevDiff = backwardDiff;
-            prevTerm = term;
-        }
-        if (forwardDiff < minNextDiff) {
-            minNextDiff = forwardDiff;
-            nextTerm = term;
-        }
-    });
-
-    // 3. 直前および次の節入り日時を二分探索で高精度計算
-    const prevJD = findSetsuriDate(targetJD, prevTerm.angle, false);
-    const nextJD = findSetsuriDate(targetJD, nextTerm.angle, true);
-
-    // ユリウス日をDateに変換 (指定されたタイムゾーン表示用調整)
-    const prevDateUTC = julianDayToDate(prevJD);
-    const nextDateUTC = julianDayToDate(nextJD);
-
-    const prevDateLocal = new Date(prevDateUTC.getTime() + (timeZoneOffsetHours * 3600 * 1000));
-    const nextDateLocal = new Date(nextDateUTC.getTime() + (timeZoneOffsetHours * 3600 * 1000));
-
-    return {
-        targetDate,
-        currentLongitude,
-        prevTerm,
-        prevDateLocal,
-        nextTerm,
-        nextDateLocal
-    };
-}
-
-/**
- * 日時フォーマット整形関数
- */
-function formatDate(d) {
-    const yyyy = d.getUTCFullYear();
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    const hh = String(d.getUTCHours()).padStart(2, '0');
-    const mi = String(d.getUTCMinutes()).padStart(2, '0');
-    const ss = String(d.getUTCSeconds()).padStart(2, '0');
-    return `${yyyy}年${mm}月${dd}日 ${hh}:${mi}:${ss}`;
-}
-
-/**
- * 差分時間のフォーマット（〇日〇時間〇分前 / 後）
- */
-function formatTimeDiff(ms) {
-    const absMs = Math.abs(ms);
-    const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((absMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    let str = "";
-    if (days > 0) str += `${days}日 `;
-    if (hours > 0 || days > 0) str += `${hours}時間 `;
-    str += `${mins}分`;
-
-    return str;
-}
-
-/**
- * フォーム送信時ハンドラ
- */
-function handleCalculate(e) {
-    if (e) e.preventDefault();
-
-    const dateStr = document.getElementById('birthDate').value;
-    const timeStr = document.getElementById('birthTime').value;
-    const tzOffset = parseFloat(document.getElementById('timeZone').value);
-
-    if (!dateStr || !timeStr) return;
-
-    // 秒が含まれていない場合は :00 を補完
-    const fullTimeStr = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
-    const targetDate = new Date(`${dateStr}T${fullTimeStr}`);
-
-    const res = analyzeSetsuri(targetDate, tzOffset);
-
-    // DOMへの描画
-    document.getElementById('displayTargetTime').textContent = `${dateStr} ${fullTimeStr}`;
-    document.getElementById('displayLongitude').textContent = `${res.currentLongitude.toFixed(4)}°`;
-    document.getElementById('displayCurrentTerm').textContent = `【${res.prevTerm.name}】節の期間中`;
-
-    // 直前の節入り
-    document.getElementById('prevTermName').textContent = `直前の節入り: ${res.prevTerm.name}`;
-    document.getElementById('prevTermAngle').textContent = `目標: ${res.prevTerm.angle}°`;
-    document.getElementById('prevTermTime').textContent = formatDate(res.prevDateLocal);
-    
-    const prevDiffMs = targetDate.getTime() - res.prevDateLocal.getTime();
-    document.getElementById('prevTermDiff').textContent = `（節入りから ${formatTimeDiff(prevDiffMs)} 経過）`;
-
-    // 次の節入り
-    document.getElementById('nextTermName').textContent = `次の節入り: ${res.nextTerm.name}`;
-    document.getElementById('nextTermAngle').textContent = `目標: ${res.nextTerm.angle}°`;
-    document.getElementById('nextTermTime').textContent = formatDate(res.nextDateLocal);
-
-    const nextDiffMs = res.nextDateLocal.getTime() - targetDate.getTime();
-    document.getElementById('nextTermDiff').textContent = `（節入りまで あと ${formatTimeDiff(nextDiffMs)}）`;
-}
-
-/**
- * プリセットボタン用ハンドラ
- */
-function setPreset(date, time) {
-    document.getElementById('birthDate').value = date;
-    document.getElementById('birthTime').value = time;
-    handleCalculate();
-}
-
-// 初期実行（デフォルト値として本日の日時をセット）
-window.onload = function() {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    
-    document.getElementById('birthDate').value = `${yyyy}-${mm}-${dd}`;
-    document.getElementById('birthTime').value = "12:00";
-    
+window.onload=function(){
+    document.getElementById("birthDate").value="2026-01-01";
+    document.getElementById("birthTime").value="12:00:00";
     handleCalculate();
 };
 </script>
